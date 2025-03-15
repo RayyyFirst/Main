@@ -2,6 +2,8 @@ local WindUI = loadstring(game:HttpGet("https://tree-hub.vercel.app/api/UI/WindU
 
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))()
 
+local Scr = loadstring(game:HttpGet("https://raw.githubusercontent.com/FlamesW/notifidk/refs/heads/home/yes"))();
+
 local Window = WindUI:CreateWindow({
     Title = "Ratware",
     Icon = "door-open",
@@ -35,6 +37,8 @@ local Tabs = {
 }
 
 Window:SelectTab(1)
+
+
 local canWallComboEnabled = false
 
 local function enableCanWallCombo()
@@ -61,7 +65,7 @@ end
 
 local PerfectBlock = false
 
-local function PerfectBlock()
+local function enablePerfectBlock()
     while PerfectBlock do
         local player = game.Players.LocalPlayer
         local char = player.Character
@@ -389,28 +393,63 @@ Tabs.QoLTab:Input({
     PlaceholderText = "16",
     ClearTextOnFocus = false,
     Callback = function(value)
-        local player = game.Players.LocalPlayer
-        if player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = tonumber(value) or 16
+        local newSpeed = tonumber(value)
+        if newSpeed then
+            local player = game.Players.LocalPlayer
+            
+            -- Apply to char
+            if player.Character then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = newSpeed
+                end
             end
+            
+           
+            local connection
+            connection = player.CharacterAdded:Connect(function(char)
+                wait(0.5) -- Wait for character to fully load
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = newSpeed
+                end
+            end)
         end
     end
 })
 
+-- Fixed JumpPower changer
 Tabs.QoLTab:Input({
     Title = "Set JumpPower",
     Desc = "Enter your JumpPower value",
     PlaceholderText = "50",
     ClearTextOnFocus = false,
     Callback = function(value)
-        local player = game.Players.LocalPlayer
-        if player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.JumpPower = tonumber(value) or 50
+        local newJumpPower = tonumber(value)
+        if newJumpPower then
+            local player = game.Players.LocalPlayer
+            
+            -- Apply to current character
+            if player.Character then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.JumpPower = newJumpPower
+                    
+                    pcall(function() humanoid.JumpHeight = newJumpPower / 2.5 end)
+                end
             end
+            
+            
+            local connection
+            connection = player.CharacterAdded:Connect(function(char)
+                wait(0.5) 
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.JumpPower = newJumpPower
+                    
+                    pcall(function() humanoid.JumpHeight = newJumpPower / 2.5 end)
+                end
+            end)
         end
     end
 })
@@ -480,6 +519,12 @@ Tabs.QoLTab:Toggle({
 
 getgenv().AutoBlocking = false
 
+
+
+
+--// Auto-Blocking //
+
+
 local function detectAttack(enemy)
     if enemy:FindFirstChildOfClass("Humanoid") and enemy:FindFirstChildOfClass("Humanoid").Health > 0 then
         local head = enemy:FindFirstChild("Head")
@@ -491,8 +536,15 @@ local function detectAttack(enemy)
                 local animator = enemy:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
                 if animator then
                     for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-                        if string.find(track.Animation.AnimationId, "Attack") then
+                        -- Check for known attack animation IDs
+                        local animId = track.Animation.AnimationId
+                        if string.find(animId, "Attack") or 
+                           animId == "rbxassetid://9912631357157" or
+                           animId == "rbxassetid://10820687502057" or
+                           animId == "rbxassetid://7158278010295" or
+                           animId == "rbxassetid://8937940983069" then
                             isAttacking = true
+                            break
                         end
                     end
                 end
@@ -617,9 +669,434 @@ Tabs.MainTab:Toggle({
     Callback = function(state)
         PerfectBlock = state
         if PerfectBlock then
-            spawn(PerfectBlock)
+            spawn(enablePerfectBlock)
         end
     end
 })
+
+
+-- Server hopper
+Tabs.QoLTab:Button({
+    Title = "Join Low Population Server",
+    Callback = function()
+        local TeleportService = game:GetService("TeleportService")
+        local HttpService = game:GetService("HttpService")
+        local servers = {}
+        
+        local req = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        
+        if req.data then
+            for _, server in pairs(req.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    table.insert(servers, server.id)
+                end
+            end
+            
+            if #servers > 0 then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)])
+            else
+                warn("No suitable servers found")
+            end
+        end
+    end
+})
+
+-- Auto-dodge 
+local autoDodgeEnabled = false
+local dodgeCooldown = false
+
+local function performDodge()
+    if dodgeCooldown then return end
+    
+    dodgeCooldown = true
+    local args = {[1] = {["Goal"] = "KeyPress", ["Key"] = Enum.KeyCode.Q}}
+    pcall(function()
+        game:GetService("Players").LocalPlayer.Character.Communicate:FireServer(unpack(args))
+    end)
+    
+    wait(1) -- Cooldown between dodges
+    dodgeCooldown = false
+end
+
+local function autoDodge()
+    while autoDodgeEnabled do
+        wait(0.1)
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        if not char then continue end
+        
+        -- Check for nearby enemies attacking
+        for _, enemy in pairs(workspace.Live:GetChildren()) do
+            if enemy ~= char and enemy:FindFirstChildOfClass("Humanoid") and enemy:FindFirstChildOfClass("Humanoid").Health > 0 then
+                local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
+                local charHRP = char:FindFirstChild("HumanoidRootPart")
+                
+                if enemyHRP and charHRP then
+                    local distance = (enemyHRP.Position - charHRP.Position).Magnitude
+                    
+                    if distance < 10 then
+                        -- Check if enemy is attacking
+                        local animator = enemy:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
+                        if animator then
+                            for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+                                if string.find(track.Animation.AnimationId, "Attack") then
+                                    performDodge()
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+Tabs.MainTab:Toggle({
+    Title = "Auto Dodge",
+    Default = false,
+    Callback = function(state)
+        autoDodgeEnabled = state
+        if autoDodgeEnabled then
+            spawn(autoDodge)
+        end
+    end
+})
+
+
+local hitboxSize = 5
+local hitboxTransparency = 0.7
+local hitboxEnabled = false
+local hitboxParts = {}
+
+-- Function to clean up existing hitbox parts
+local function cleanupHitboxes()
+    for _, part in pairs(hitboxParts) do
+        if part and part.Parent then
+            part:Destroy()
+        end
+    end
+    hitboxParts = {}
+end
+
+
+local function updateHitboxes()
+    cleanupHitboxes()
+    
+    if not hitboxEnabled then return end
+    
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                -- Create a single hitbox part for each player
+                local hitboxPart = Instance.new("Part")
+                hitboxPart.Name = "HitboxPart"
+                hitboxPart.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                hitboxPart.Transparency = hitboxTransparency
+                hitboxPart.CanCollide = false
+                hitboxPart.Anchored = false
+                hitboxPart.Material = Enum.Material.SmoothPlastic
+                
+                -- Make the hitbox part non-solid
+                hitboxPart.Massless = true
+                hitboxPart.CastShadow = false
+                
+                -- Create weld to attach hitbox to HumanoidRootPart
+                local weld = Instance.new("Weld")
+                weld.Part0 = hrp
+                weld.Part1 = hitboxPart
+                weld.C0 = CFrame.new(0, 0, 0)
+                weld.Parent = hitboxPart
+                
+                -- Set collision properties to prevent physics issues
+                hitboxPart.CanQuery = true
+                hitboxPart.CanTouch = true
+                
+                -- Parent the hitbox part to the character
+                hitboxPart.Parent = player.Character
+                
+                -- Add to our tracking table
+                table.insert(hitboxParts, hitboxPart)
+            end
+        end
+    end
+end
+
+-- Toggle for hitbox extender
+Tabs.MainTab:Toggle({
+    Title = "Enable Hitbox Extender",
+    Default = false,
+    Callback = function(state)
+        hitboxEnabled = state
+        if hitboxEnabled then
+            updateHitboxes()
+        else
+            cleanupHitboxes()
+        end
+    end
+})
+
+-- Input for hitbox size
+Tabs.MainTab:Input({
+    Title = "Hitbox Size",
+    Desc = "Enter hitbox size (1-20)",
+    PlaceholderText = "5",
+    ClearTextOnFocus = false,
+    Callback = function(value)
+        local newSize = tonumber(value)
+        if newSize and newSize >= 1 and newSize <= 20 then
+            hitboxSize = newSize
+            if hitboxEnabled then
+                updateHitboxes()
+            end
+        end
+    end
+})
+
+-- Input for hitbox transparency
+Tabs.MainTab:Input({
+    Title = "Hitbox Transparency",
+    Desc = "Enter transparency (0-1)",
+    PlaceholderText = "0.7",
+    ClearTextOnFocus = false,
+    Callback = function(value)
+        local newTransparency = tonumber(value)
+        if newTransparency and newTransparency >= 0 and newTransparency <= 1 then
+            hitboxTransparency = newTransparency
+            if hitboxEnabled then
+                updateHitboxes()
+            end
+        end
+    end
+})
+
+
+game.Players.PlayerAdded:Connect(function()
+    if hitboxEnabled then
+        wait(1) 
+        updateHitboxes()
+    end
+end)
+
+game.Players.PlayerRemoving:Connect(function()
+    if hitboxEnabled then
+        updateHitboxes()
+    end
+end)
+
+
+spawn(function()
+    while wait(2) do
+        if hitboxEnabled then
+            updateHitboxes()
+        end
+    end
+end)
+
+local northernLightsEnabled = false
+local originalLightingSettings = {}
+local auroraColors = {
+    Color3.fromRGB(28, 233, 130),   -- Green
+    Color3.fromRGB(63, 127, 255),   -- Blue
+    Color3.fromRGB(170, 85, 255),   -- Purple
+    Color3.fromRGB(28, 200, 255)    -- Cyan
+}
+local colorIndex = 1
+local colorBlendTime = 0
+
+local function toggleNorthernLights()
+    local lighting = game:GetService("Lighting")
+    
+    if northernLightsEnabled then
+        -- Save original lighting settings if not saved already
+        if not originalLightingSettings.Ambient then
+            originalLightingSettings.Ambient = lighting.Ambient
+            originalLightingSettings.OutdoorAmbient = lighting.OutdoorAmbient
+            originalLightingSettings.ColorShift_Top = lighting.ColorShift_Top
+            originalLightingSettings.ColorShift_Bottom = lighting.ColorShift_Bottom
+            originalLightingSettings.Brightness = lighting.Brightness
+        end
+        
+        -- Start the aurora effect update loop
+        spawn(function()
+            while northernLightsEnabled do
+                -- Blend between colors
+                colorBlendTime = colorBlendTime + 0.01
+                if colorBlendTime >= 1 then
+                    colorBlendTime = 0
+                    colorIndex = colorIndex % #auroraColors + 1
+                end
+                
+                local currentColor = auroraColors[colorIndex]
+                local nextColor = auroraColors[colorIndex % #auroraColors + 1]
+                local blendedColor = Color3.new(
+                    currentColor.R + (nextColor.R - currentColor.R) * colorBlendTime,
+                    currentColor.G + (nextColor.G - currentColor.G) * colorBlendTime,
+                    currentColor.B + (nextColor.B - currentColor.B) * colorBlendTime
+                )
+                
+                
+                lighting.Ambient = Color3.fromRGB(20, 20, 30)
+                lighting.OutdoorAmbient = Color3.fromRGB(30, 30, 40)
+                lighting.ColorShift_Top = blendedColor
+                lighting.ColorShift_Bottom = Color3.fromRGB(10, 10, 30)
+                lighting.Brightness = 1.2
+                
+                wait(0.1)
+            end
+        end)
+    else
+        -- Restore original lighting settings
+        if originalLightingSettings.Ambient then
+            lighting.Ambient = originalLightingSettings.Ambient
+            lighting.OutdoorAmbient = originalLightingSettings.OutdoorAmbient
+            lighting.ColorShift_Top = originalLightingSettings.ColorShift_Top
+            lighting.ColorShift_Bottom = originalLightingSettings.ColorShift_Bottom
+            lighting.Brightness = originalLightingSettings.Brightness
+        end
+    end
+end
+
+Tabs.QoLTab:Toggle({
+    Title = "Northern Lights Effect",
+    Default = false,
+    Callback = function(state)
+        northernLightsEnabled = state
+        toggleNorthernLights()
+    end
+})
+
+local arcticNightEnabled = false
+local originalSkySettings = {}
+
+local function toggleArcticNight()
+    local lighting = game:GetService("Lighting")
+    
+    if arcticNightEnabled then
+        -- Save original settings if not saved already
+        if not originalSkySettings.ClockTime then
+            originalSkySettings.ClockTime = lighting.ClockTime
+            originalSkySettings.Brightness = lighting.Brightness
+            originalSkySettings.Ambient = lighting.Ambient
+            originalSkySettings.OutdoorAmbient = lighting.OutdoorAmbient
+            originalSkySettings.ColorShift_Top = lighting.ColorShift_Top
+            originalSkySettings.ColorShift_Bottom = lighting.ColorShift_Bottom
+            originalSkySettings.FogColor = lighting.FogColor
+            originalSkySettings.FogStart = lighting.FogStart
+            originalSkySettings.FogEnd = lighting.FogEnd
+            
+            -- Save sky settings if they exist
+            local sky = lighting:FindFirstChildOfClass("Sky")
+            if sky then
+                originalSkySettings.SkyboxBk = sky.SkyboxBk
+                originalSkySettings.SkyboxDn = sky.SkyboxDn
+                originalSkySettings.SkyboxFt = sky.SkyboxFt
+                originalSkySettings.SkyboxLf = sky.SkyboxLf
+                originalSkySettings.SkyboxRt = sky.SkyboxRt
+                originalSkySettings.SkyboxUp = sky.SkyboxUp
+                originalSkySettings.StarCount = sky.StarCount
+            end
+        end
+        
+        
+        lighting.ClockTime = 3 -- Night time
+        lighting.Brightness = 0.2
+        lighting.Ambient = Color3.fromRGB(20, 30, 50)
+        lighting.OutdoorAmbient = Color3.fromRGB(30, 40, 60)
+        lighting.ColorShift_Top = Color3.fromRGB(30, 120, 90)
+        lighting.ColorShift_Bottom = Color3.fromRGB(10, 20, 40)
+        lighting.FogColor = Color3.fromRGB(20, 30, 50)
+        lighting.FogStart = 200
+        lighting.FogEnd = 1000
+        
+        
+        local sky = lighting:FindFirstChildOfClass("Sky")
+        if not sky then
+            sky = Instance.new("Sky")
+            sky.Parent = lighting
+        end
+        
+        
+        sky.SkyboxBk = "rbxassetid://218955819"
+        sky.SkyboxDn = "rbxassetid://218953419"
+        sky.SkyboxFt = "rbxassetid://218954524"
+        sky.SkyboxLf = "rbxassetid://218958493"
+        sky.SkyboxRt = "rbxassetid://218957134"
+        sky.SkyboxUp = "rbxassetid://218950090"
+        sky.StarCount = 5000
+        sky.MoonAngularSize = 11
+        sky.MoonTextureId = "rbxassetid://1075087760"
+        
+
+        spawn(function()
+            while arcticNightEnabled do
+            
+                lighting.ColorShift_Top = Color3.fromRGB(
+                    math.random(20, 40),
+                    math.random(100, 140),
+                    math.random(70, 110)
+                )
+                
+                wait(0.5)
+            end
+        end)
+    else
+       
+        if originalSkySettings.ClockTime then
+            lighting.ClockTime = originalSkySettings.ClockTime
+            lighting.Brightness = originalSkySettings.Brightness
+            lighting.Ambient = originalSkySettings.Ambient
+            lighting.OutdoorAmbient = originalSkySettings.OutdoorAmbient
+            lighting.ColorShift_Top = originalSkySettings.ColorShift_Top
+            lighting.ColorShift_Bottom = originalSkySettings.ColorShift_Bottom
+            lighting.FogColor = originalSkySettings.FogColor
+            lighting.FogStart = originalSkySettings.FogStart
+            lighting.FogEnd = originalSkySettings.FogEnd
+            
+           
+            local sky = lighting:FindFirstChildOfClass("Sky")
+            if sky and originalSkySettings.SkyboxBk then
+                sky.SkyboxBk = originalSkySettings.SkyboxBk
+                sky.SkyboxDn = originalSkySettings.SkyboxDn
+                sky.SkyboxFt = originalSkySettings.SkyboxFt
+                sky.SkyboxLf = originalSkySettings.SkyboxLf
+                sky.SkyboxRt = originalSkySettings.SkyboxRt
+                sky.SkyboxUp = originalSkySettings.SkyboxUp
+                sky.StarCount = originalSkySettings.StarCount
+            end
+        end
+    end
+end
+
+Tabs.QoLTab:Toggle({
+    Title = "Arctic Night Sky",
+    Default = false,
+    Callback = function(state)
+        arcticNightEnabled = state
+        toggleArcticNight()
+    end
+})
+
+warn("Update 1.4.9")
+
+
+
+
+--// Notification Thing, remove if you don't want it \\--
+    
+Scr:Notify("Welcome","Script created by ratatwowee.",15);
+
+--// End of Script //--
+
+
+
+--// Script created by ratatwowee/attemptingtocode //--
+
+--// Version: 1.4.9 //--
+
+--// Last updated: 2025/03/15 //--
+
+--// Purpose: A customizable, user-friendly GUI for ruining an ass game. //--
 
 Tabs.CreditsTab:Button({ Title = "ratatwowee", Desc = "i made all of this, more coming soon. .gg/HFNxs7ZYaX for more updates!", Callback = function() print("hi") end })
