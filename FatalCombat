@@ -769,7 +769,6 @@ local hitboxTransparency = 0.7
 local hitboxEnabled = false
 local hitboxParts = {}
 
--- Function to clean up existing hitbox parts
 local function cleanupHitboxes()
     for _, part in pairs(hitboxParts) do
         if part and part.Parent then
