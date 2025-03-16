@@ -1077,12 +1077,332 @@ Tabs.QoLTab:Toggle({
     end
 })
 
-warn("Update 1.4.9")
+-- FPS Counter
+local fpsEnabled = false
+local fpsLabel = nil
+
+local function createFpsCounter()
+    if fpsLabel then return end
+    
+    fpsLabel = Instance.new("TextLabel")
+    fpsLabel.Size = UDim2.new(0, 150, 0, 30)
+    fpsLabel.Position = UDim2.new(0, 10, 0, 10)
+    fpsLabel.BackgroundTransparency = 0.5
+    fpsLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    fpsLabel.TextStrokeTransparency = 0
+    fpsLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    fpsLabel.Font = Enum.Font.SourceSansBold
+    fpsLabel.TextSize = 16
+    fpsLabel.Text = "FPS: Calculating..."
+    fpsLabel.Parent = game:GetService("CoreGui")
+    
+    local lastUpdate = tick()
+    local frameCount = 0
+    
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if not fpsEnabled then
+            fpsLabel.Visible = false
+            return
+        end
+        
+        fpsLabel.Visible = true
+        frameCount = frameCount + 1
+        
+        local currentTime = tick()
+        local elapsed = currentTime - lastUpdate
+        
+        if elapsed >= 1 then
+            local fps = math.floor(frameCount / elapsed)
+            fpsLabel.Text = "FPS: " .. fps
+            frameCount = 0
+            lastUpdate = currentTime
+        end
+    end)
+end
+
+Tabs.QoLTab:Toggle({
+    Title = "FPS Counter",
+    Default = false,
+    Callback = function(state)
+        fpsEnabled = state
+        createFpsCounter()
+    end
+})
+
+-- Server Info Display
+Tabs.QoLTab:Button({
+    Title = "Show Server Info",
+    Callback = function()
+        local players = game:GetService("Players"):GetPlayers()
+        local serverAge = math.floor(game:GetService("Workspace").DistributedGameTime / 60)
+        
+        Scr:Notify({
+            Title = "Server Information",
+            Description = "Players: " .. #players .. "/" .. game:GetService("Players").MaxPlayers .. 
+                          "\nServer Age: " .. serverAge .. " minutes" ..
+                          "\nServer ID: " .. game.JobId,
+            Duration = 5
+        })
+    end
+})
+
+-- Fullbright
+local fullbrightEnabled = false
+
+Tabs.QoLTab:Toggle({
+    Title = "Fullbright",
+    Default = false,
+    Callback = function(state)
+        fullbrightEnabled = state
+        
+        if fullbrightEnabled then
+            local lighting = game:GetService("Lighting")
+            lighting.Brightness = 2
+            lighting.ClockTime = 14
+            lighting.FogEnd = 100000
+            lighting.GlobalShadows = false
+            lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+        else
+            local lighting = game:GetService("Lighting")
+            lighting.Brightness = 1
+            lighting.ClockTime = 12
+            lighting.FogEnd = 10000
+            lighting.GlobalShadows = true
+            lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+        end
+    end
+})
+
+-- Chat Spammer
+local spamEnabled = false
+local spamMessage = "Ratware on top!"
+local spamDelay = 3
+
+local function chatSpammer()
+    while spamEnabled do
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(spamMessage, "All")
+        wait(spamDelay)
+    end
+end
+
+Tabs.QoLTab:Toggle({
+    Title = "Chat Spammer",
+    Default = false,
+    Callback = function(state)
+        spamEnabled = state
+        if spamEnabled then
+            spawn(chatSpammer)
+        end
+    end
+})
+
+Tabs.QoLTab:Input({
+    Title = "Spam Message",
+    Desc = "Enter message to spam",
+    PlaceholderText = "Ratware on top!",
+    ClearTextOnFocus = false,
+    Callback = function(value)
+        spamMessage = value
+    end
+})
+
+Tabs.QoLTab:Slider({
+    Title = "Spam Delay",
+    Min = 1,
+    Max = 10,
+    Default = 3,
+    Callback = function(value)
+        spamDelay = value
+    end
+})
+
+-- Auto Rejoin
+Tabs.QoLTab:Button({
+    Title = "Auto Rejoin",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
+    end
+})
+
+-- Rejoin on Kick
+local rejoinOnKick = false
+
+Tabs.QoLTab:Toggle({
+    Title = "Rejoin On Kick",
+    Default = false,
+    Callback = function(state)
+        rejoinOnKick = state
+        
+        if rejoinOnKick then
+            local coreGui = game:GetService("CoreGui")
+            
+            if not coreGui:FindFirstChild("RejoinKickDetector") then
+                local detector = Instance.new("ScreenGui")
+                detector.Name = "RejoinKickDetector"
+                detector.Parent = coreGui
+                
+                local function onChildAdded(child)
+                    if child.Name == "ErrorPrompt" then
+                        wait(1)
+                        game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
+                    end
+                end
+                
+                coreGui.ChildAdded:Connect(onChildAdded)
+            end
+        end
+    end
+})
 
 
+-- Ping Display
+local pingEnabled = false
+local pingLabel = nil
 
+local function createPingCounter()
+    if pingLabel then return end
+    
+    pingLabel = Instance.new("TextLabel")
+    pingLabel.Size = UDim2.new(0, 150, 0, 30)
+    pingLabel.Position = UDim2.new(0, 10, 0, 50)
+    pingLabel.BackgroundTransparency = 0.5
+    pingLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    pingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pingLabel.TextStrokeTransparency = 0
+    pingLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    pingLabel.Font = Enum.Font.SourceSansBold
+    pingLabel.TextSize = 16
+    pingLabel.Text = "Ping: Calculating..."
+    pingLabel.Parent = game:GetService("CoreGui")
+    
+    spawn(function()
+        while true do
+            if not pingEnabled then
+                pingLabel.Visible = false
+                wait(1)
+                continue
+            end
+            
+            pingLabel.Visible = true
+            local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+            pingLabel.Text = "Ping: " .. ping .. "ms"
+            wait(1)
+        end
+    end)
+end
 
---// Notification Thing, remove if you don't want it \\--
+Tabs.QoLTab:Toggle({
+    Title = "Ping Display",
+    Default = false,
+    Callback = function(state)
+        pingEnabled = state
+        createPingCounter()
+    end
+})
+
+-- Leave on Mod Join
+local leaveOnModEnabled = false
+local modUserIds = {
+    2640642218, -- RedNayru
+    1159228619, -- Justvoid
+    190978911, -- Tangy
+    
+}
+local modGroupIds = {
+    {groupId = 32817944, minRank = 50}, -- if your modifying my code, add more groups.
+}
+
+-- Function to check if a player is a moderator
+local function isPlayerMod(player)
+    -- Check if player's userId is in our mod list
+    if table.find(modUserIds, player.UserId) then
+        return true
+    end
+    
+    -- Check if player has moderator rank in any of our specified groups
+    for _, groupInfo in ipairs(modGroupIds) do
+        local success, rank = pcall(function()
+            return player:GetRankInGroup(groupInfo.groupId)
+        end)
+        
+        if success and rank >= groupInfo.minRank then
+            return true
+        end
+    end
+    
+    local lowerName = string.lower(player.Name)
+    local lowerDisplayName = string.lower(player.DisplayName)
+    local modKeywords = {"mod", "admin", "staff", "moderator"}
+    
+    for _, keyword in ipairs(modKeywords) do
+        if string.find(lowerName, keyword) or string.find(lowerDisplayName, keyword) then
+            return true
+        end
+    end
+    
+    return false
+end
+
+local function onPlayerJoined(player)
+    if not leaveOnModEnabled then return end
+    
+    if isPlayerMod(player) then
+        Scr:Notify("Moderator Detected", player.Name .. " (" .. player.DisplayName .. ") has joined the game. Leaving...", 5)
+        wait(2) -- Give time for notification to be seen
+        game:GetService("Players").LocalPlayer:Kick("Automatically left: Moderator joined")
+        wait(0.5)
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end
+end
+
+--  check existing players when feature is enabled
+local function checkExistingPlayers()
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game:GetService("Players").LocalPlayer and isPlayerMod(player) then
+            Scr:Notify("Moderator Detected", player.Name .. " (" .. player.DisplayName .. ") is in the server. Leaving...", 5)
+            wait(2) -- Give time for notification to be seen
+            game:GetService("Players").LocalPlayer:Kick("Automatically left: Moderator in server")
+            wait(0.5)
+            game:GetService("TeleportService"):Teleport(game.PlaceId)
+            break
+        end
+    end
+end
+
+Tabs.QoLTab:Toggle({
+    Title = "Leave on Mod Join",
+    Default = false,
+    Callback = function(state)
+        leaveOnModEnabled = state
+        
+        if leaveOnModEnabled then
+            -- Check if there are already mods in the server
+            checkExistingPlayers()
+            
+            -- Connect player added event
+            if not getgenv().ModJoinConnection then
+                getgenv().ModJoinConnection = game:GetService("Players").PlayerAdded:Connect(onPlayerJoined)
+            end
+        else
+            -- Disconnect event if it exists
+            if getgenv().ModJoinConnection then
+                getgenv().ModJoinConnection:Disconnect()
+                getgenv().ModJoinConnection = nil
+            end
+        end
+    end
+})
+
+warn("Update 1.5.1")
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Welcome to Ratware", 
+    Text = "This script is provided for free with no legal bindings.", 
+    Duration = 10, 
+})
+
+--// Notification, remove if you don't want it \\--
     
 Scr:Notify("Welcome","Script created by ratatwowee.",15);
 
@@ -1097,5 +1417,9 @@ Scr:Notify("Welcome","Script created by ratatwowee.",15);
 --// Last updated: 2025/03/15 //--
 
 --// Purpose: A customizable, user-friendly GUI for ruining an ass game. //--
+
+--// Requires: A decent executor. //--
+
+--// Note: This script is for educational purposes only and should not be used for malicious purposes. //--
 
 Tabs.CreditsTab:Button({ Title = "ratatwowee", Desc = "i made all of this, more coming soon. .gg/HFNxs7ZYaX for more updates!", Callback = function() print("hi") end })
