@@ -1,19 +1,7 @@
---[[
-    NexusUI Library
-    A modern, clean UI library for Ratware 
-    Version 1.0.0
-    
-    Features:
-    - Smooth animations and transitions
-    - Tabs system
-    - Buttons, toggles, sliders
-    - Dropdowns and multi-select dropdowns
-    - Input boxes
-    - Notifications
-    - Clean, modern design
-]]
+--// NebulaLib \\--
 
-local NexusUI = {}
+local NebulaUI = {}
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
@@ -21,39 +9,33 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Constants
-local THEME = {
-    Background = Color3.fromRGB(25, 25, 25),
-    DarkBackground = Color3.fromRGB(18, 18, 18),
-    LightBackground = Color3.fromRGB(30, 30, 30),
-    Accent = Color3.fromRGB(114, 137, 218), -- Purple-blue accent
+-- Color palette
+local COLORS = {
+    Background = Color3.fromRGB(20, 20, 20),
+    BackgroundDarker = Color3.fromRGB(15, 15, 15),
+    Accent = Color3.fromRGB(130, 100, 255),
+    AccentDarker = Color3.fromRGB(100, 70, 220),
     Text = Color3.fromRGB(255, 255, 255),
     SubText = Color3.fromRGB(180, 180, 180),
-    Success = Color3.fromRGB(67, 181, 129),
-    Warning = Color3.fromRGB(240, 184, 49),
-    Error = Color3.fromRGB(240, 71, 71),
-    Highlight = Color3.fromRGB(114, 137, 218),
-    DarkAccent = Color3.fromRGB(81, 97, 155)
+    TabSelected = Color3.fromRGB(40, 40, 40),
+    TabUnselected = Color3.fromRGB(25, 25, 25),
+    Toggle = Color3.fromRGB(130, 100, 255),
+    ToggleOff = Color3.fromRGB(60, 60, 60),
+    Slider = Color3.fromRGB(130, 100, 255),
+    SliderBackground = Color3.fromRGB(40, 40, 40),
+    Dropdown = Color3.fromRGB(30, 30, 30),
+    DropdownOption = Color3.fromRGB(40, 40, 40),
+    InputBox = Color3.fromRGB(30, 30, 30),
+    Notification = Color3.fromRGB(30, 30, 30),
+    NotificationSuccess = Color3.fromRGB(0, 255, 100),
+    NotificationError = Color3.fromRGB(255, 50, 50),
+    NotificationInfo = Color3.fromRGB(100, 200, 255)
 }
 
-local FONTS = {
-    Regular = Enum.Font.Gotham,
-    Bold = Enum.Font.GothamBold,
-    SemiBold = Enum.Font.GothamSemibold,
-    Medium = Enum.Font.GothamMedium
-}
-
-local EASING_STYLES = {
-    Default = Enum.EasingStyle.Quint,
-    Bounce = Enum.EasingStyle.Bounce,
-    Elastic = Enum.EasingStyle.Elastic,
-    Sine = Enum.EasingStyle.Sine
-}
-
--- Utility Functions
+-- Utility functions
 local function createInstance(className, properties)
     local instance = Instance.new(className)
-    for property, value in pairs(properties or {}) do
+    for property, value in pairs(properties) do
         instance[property] = value
     end
     return instance
@@ -62,7 +44,7 @@ end
 local function tween(instance, properties, duration, easingStyle, easingDirection)
     local tweenInfo = TweenInfo.new(
         duration or 0.3,
-        easingStyle or EASING_STYLES.Default,
+        easingStyle or Enum.EasingStyle.Quad,
         easingDirection or Enum.EasingDirection.Out
     )
     local tween = TweenService:Create(instance, tweenInfo, properties)
@@ -81,7 +63,7 @@ local function rippleEffect(button)
         Parent = button
     })
     
-    createInstance("UICorner", {
+    local corner = createInstance("UICorner", {
         CornerRadius = UDim.new(1, 0),
         Parent = ripple
     })
@@ -94,32 +76,24 @@ local function rippleEffect(button)
     end)
 end
 
--- Main Library
-function NexusUI.new(title, logoId)
-    -- Prevent multiple instances
-    if CoreGui:FindFirstChild("NexusUILib") then
-        CoreGui:FindFirstChild("NexusUILib"):Destroy()
-    end
-    
-    -- Create main GUI
-    local nexusUI = createInstance("ScreenGui", {
-        Name = "NexusUILib",
+-- Main UI creation function
+function NebulaUI.new(title)
+    local screenGui = createInstance("ScreenGui", {
+        Name = "NebulaUI",
         Parent = CoreGui,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false
     })
-    
-    -- Create main frame
+
     local mainFrame = createInstance("Frame", {
         Name = "MainFrame",
-        Size = UDim2.new(0, 700, 0, 450),
-        Position = UDim2.new(0.5, -350, 0.5, -225),
-        BackgroundColor3 = THEME.Background,
+        Size = UDim2.new(0, 700, 0, 400),
+        Position = UDim2.new(0.5, -350, 0.5, -200),
+        BackgroundColor3 = COLORS.Background,
         BorderSizePixel = 0,
-        Parent = nexusUI
+        Parent = screenGui
     })
-    
-    -- Add shadow
+
     local shadow = createInstance("ImageLabel", {
         Name = "Shadow",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -132,182 +106,93 @@ function NexusUI.new(title, logoId)
         ImageTransparency = 0.5,
         Parent = mainFrame
     })
-    
-    -- Round corners
-    local corner = createInstance("UICorner", {
+
+    local cornerRadius = createInstance("UICorner", {
         CornerRadius = UDim.new(0, 8),
         Parent = mainFrame
     })
-    
-    -- Create title bar
+
     local titleBar = createInstance("Frame", {
         Name = "TitleBar",
         Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = THEME.DarkBackground,
+        BackgroundColor3 = COLORS.BackgroundDarker,
         BorderSizePixel = 0,
         Parent = mainFrame
     })
-    
-    -- Round top corners of title bar
-    local titleCorner = createInstance("UICorner", {
+
+    local titleBarCorner = createInstance("UICorner", {
         CornerRadius = UDim.new(0, 8),
         Parent = titleBar
     })
-    
-    -- Fix title bar corners
+
     local titleBarFix = createInstance("Frame", {
         Name = "TitleBarFix",
         Size = UDim2.new(1, 0, 0, 10),
         Position = UDim2.new(0, 0, 1, -10),
-        BackgroundColor3 = THEME.DarkBackground,
+        BackgroundColor3 = COLORS.BackgroundDarker,
         BorderSizePixel = 0,
+        ZIndex = 0,
         Parent = titleBar
     })
-    
-    -- Create logo (if provided)
-    if logoId then
-        local logo = createInstance("ImageLabel", {
-            Name = "Logo",
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(0, 10, 0, 8),
-            BackgroundTransparency = 1,
-            Image = logoId,
-            Parent = titleBar
-        })
-        
-        -- Create title label with offset for logo
-        local titleLabel = createInstance("TextLabel", {
-            Name = "Title",
-            Size = UDim2.new(1, -80, 1, 0),
-            Position = UDim2.new(0, 40, 0, 0),
-            BackgroundTransparency = 1,
-            Font = FONTS.Bold,
-            Text = title or "NexusUI",
-            TextColor3 = THEME.Text,
-            TextSize = 16,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = titleBar
-        })
-    else
-        -- Create title label without logo
-        local titleLabel = createInstance("TextLabel", {
-            Name = "Title",
-            Size = UDim2.new(1, -80, 1, 0),
-            Position = UDim2.new(0, 10, 0, 0),
-            BackgroundTransparency = 1,
-            Font = FONTS.Bold,
-            Text = title or "NexusUI",
-            TextColor3 = THEME.Text,
-            TextSize = 16,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = titleBar
-        })
-    end
-    
-    -- Create close button
+
+    local titleLabel = createInstance("TextLabel", {
+        Name = "TitleLabel",
+        Size = UDim2.new(0, 200, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = COLORS.Accent,
+        TextSize = 18,
+        Font = Enum.Font.GothamBold,
+        Text = title or "nebulatech",
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = titleBar
+    })
+
     local closeButton = createInstance("TextButton", {
         Name = "CloseButton",
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(1, -35, 0, 5),
-        BackgroundColor3 = THEME.Error,
-        BackgroundTransparency = 0.8,
+        BackgroundColor3 = Color3.fromRGB(255, 70, 70),
         Text = "",
         Parent = titleBar
     })
-    
-    -- Add X to close button
-    local closeX = createInstance("TextLabel", {
-        Name = "X",
-        Size = UDim2.new(1, 0, 1, 0),
+
+    local closeButtonCorner = createInstance("UICorner", {
+        CornerRadius = UDim.new(0, 15),
+        Parent = closeButton
+    })
+
+    local closeIcon = createInstance("ImageLabel", {
+        Name = "CloseIcon",
+        Size = UDim2.new(0.6, 0, 0.6, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
-        Font = FONTS.Bold,
-        Text = "×",
-        TextColor3 = THEME.Text,
-        TextSize = 20,
+        Image = "rbxassetid://7072725342",
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
         Parent = closeButton
     })
-    
-    -- Round close button
-    local closeCorner = createInstance("UICorner", {
-        CornerRadius = UDim.new(0, 15),
-        Parent = closeButton
-    })
-    
-    -- Close button hover effect
-    closeButton.MouseEnter:Connect(function()
-        tween(closeButton, {BackgroundTransparency = 0}, 0.2)
-    end)
-    
-    closeButton.MouseLeave:Connect(function()
-        tween(closeButton, {BackgroundTransparency = 0.8}, 0.2)
-    end)
-    
+
     closeButton.MouseButton1Click:Connect(function()
-        tween(mainFrame, {Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 0)}, 0.3)
-        wait(0.3)
-        nexusUI:Destroy()
+        tween(mainFrame, {Position = UDim2.new(0.5, -350, 1.5, 0)}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        wait(0.5)
+        screenGui:Destroy()
     end)
-    
-    -- Create minimize button
-    local minimizeButton = createInstance("TextButton", {
-        Name = "MinimizeButton",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -70, 0, 5),
-        BackgroundColor3 = THEME.Warning,
-        BackgroundTransparency = 0.8,
-        Text = "",
-        Parent = titleBar
-    })
-    
-    -- Add minimize symbol
-    local minimizeSymbol = createInstance("Frame", {
-        Name = "MinimizeSymbol",
-        Size = UDim2.new(0, 12, 0, 2),
-        Position = UDim2.new(0.5, -6, 0.5, 0),
-        BackgroundColor3 = THEME.Text,
-        BorderSizePixel = 0,
-        Parent = minimizeButton
-    })
-    
-    -- Round minimize button
-    local minimizeCorner = createInstance("UICorner", {
-        CornerRadius = UDim.new(0, 15),
-        Parent = minimizeButton
-    })
-    
-    -- Minimize button hover effect
-    local minimized = false
-    minimizeButton.MouseEnter:Connect(function()
-        tween(minimizeButton, {BackgroundTransparency = 0}, 0.2)
-    end)
-    
-    minimizeButton.MouseLeave:Connect(function()
-        tween(minimizeButton, {BackgroundTransparency = 0.8}, 0.2)
-    end)
-    
-    minimizeButton.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        if minimized then
-            tween(mainFrame, {Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 40)}, 0.3)
-        else
-            tween(mainFrame, {Size = UDim2.new(0, mainFrame.Size.X.Offset, 0, 450)}, 0.3)
-        end
-    end)
-    
-    -- Make UI draggable
+
+    -- Make the UI draggable
     local dragging, dragInput, dragStart, startPos
-    
+
     local function update(input)
         local delta = input.Position - dragStart
         mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
-    
+
     titleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = mainFrame.Position
-            
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -315,404 +200,436 @@ function NexusUI.new(title, logoId)
             end)
         end
     end)
-    
+
     titleBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
-    
+
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             update(input)
         end
     end)
-    
-    -- Create sidebar for tabs
-    local sidebar = createInstance("Frame", {
-        Name = "Sidebar",
+
+    -- Content area
+    local sideBar = createInstance("Frame", {
+        Name = "SideBar",
         Size = UDim2.new(0, 150, 1, -40),
         Position = UDim2.new(0, 0, 0, 40),
-        BackgroundColor3 = THEME.DarkBackground,
+        BackgroundColor3 = COLORS.BackgroundDarker,
         BorderSizePixel = 0,
         Parent = mainFrame
     })
-    
-    -- Create tab container
-    local tabContainer = createInstance("ScrollingFrame", {
-        Name = "TabContainer",
+
+    local sideBarCorner = createInstance("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = sideBar
+    })
+
+    local sideBarFix = createInstance("Frame", {
+        Name = "SideBarFix",
+        Size = UDim2.new(0, 10, 1, 0),
+        Position = UDim2.new(1, -10, 0, 0),
+        BackgroundColor3 = COLORS.BackgroundDarker,
+        BorderSizePixel = 0,
+        ZIndex = 0,
+        Parent = sideBar
+    })
+
+    local tabButtonsHolder = createInstance("ScrollingFrame", {
+        Name = "TabButtonsHolder",
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 2,
-        ScrollBarImageColor3 = THEME.Accent,
-        ScrollingDirection = Enum.ScrollingDirection.Y,
+        ScrollBarImageColor3 = COLORS.Accent,
         CanvasSize = UDim2.new(0, 0, 0, 0),
-        Parent = sidebar
+        Parent = sideBar
     })
-    
-    -- Add padding to tab container
-    local tabPadding = createInstance("UIPadding", {
-        PaddingTop = UDim.new(0, 10),
-        PaddingBottom = UDim.new(0, 10),
-        Parent = tabContainer
-    })
-    
-    -- Add list layout to tab container
-    local tabLayout = createInstance("UIListLayout", {
-        Padding = UDim.new(0, 5),
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+
+    local tabButtonsLayout = createInstance("UIListLayout", {
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = tabContainer
+        Padding = UDim.new(0, 5),
+        Parent = tabButtonsHolder
     })
-    
-    -- Create content area
-    local contentArea = createInstance("Frame", {
-        Name = "ContentArea",
-        Size = UDim2.new(1, -150, 1, -40),
-        Position = UDim2.new(0, 150, 0, 40),
-        BackgroundColor3 = THEME.Background,
+
+    local tabButtonsPadding = createInstance("UIPadding", {
+        PaddingTop = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+        Parent = tabButtonsHolder
+    })
+
+    local contentFrame = createInstance("Frame", {
+        Name = "ContentFrame",
+        Size = UDim2.new(1, -160, 1, -50),
+        Position = UDim2.new(0, 155, 0, 45),
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        ClipsDescendants = true,
         Parent = mainFrame
     })
-    
-        -- Create content container
-        local contentContainer = createInstance("Folder", {
-            Name = "ContentContainer",
-            Parent = contentArea
+
+    local tabsHolder = createInstance("Frame", {
+        Name = "TabsHolder",
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Parent = contentFrame
+    })
+
+    local tabsLayout = createInstance("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Horizontal,
+        Padding = UDim.new(0, 5),
+        Parent = tabsHolder
+    })
+
+    local pagesHolder = createInstance("Frame", {
+        Name = "PagesHolder",
+        Size = UDim2.new(1, 0, 1, -35),
+        Position = UDim2.new(0, 0, 0, 35),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Parent = contentFrame
+    })
+
+    -- Animation entrance
+    mainFrame.Position = UDim2.new(0.5, -350, 1.5, 0)
+    tween(mainFrame, {Position = UDim2.new(0.5, -350, 0.5, -200)}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+    -- Notification system
+    local notificationsFrame = createInstance("Frame", {
+        Name = "NotificationsFrame",
+        Size = UDim2.new(0, 300, 1, 0),
+        Position = UDim2.new(1, -310, 0, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Parent = screenGui
+    })
+
+    local notificationsLayout = createInstance("UIListLayout", {
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        VerticalAlignment = Enum.VerticalAlignment.Bottom,
+        Padding = UDim.new(0, 10),
+        Parent = notificationsFrame
+    })
+
+    local notificationsPadding = createInstance("UIPadding", {
+        PaddingBottom = UDim.new(0, 10),
+        Parent = notificationsFrame
+    })
+
+    -- Tab system
+    local tabs = {}
+    local selectedTab = nil
+    local selectedCategory = nil
+    local categories = {}
+
+    local library = {
+        ScreenGui = screenGui,
+        MainFrame = mainFrame,
+        Tabs = tabs,
+        SelectedTab = nil,
+        SelectedCategory = nil
+    }
+
+    function library:Tab(name)
+        local tabButton = createInstance("TextButton", {
+            Name = name .. "Button",
+            Size = UDim2.new(1, 0, 0, 30),
+            BackgroundColor3 = COLORS.TabUnselected,
+            Text = "",
+            Parent = tabButtonsHolder
         })
-        
-        -- Update tab container canvas size when tabs are added
-        tabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tabContainer.CanvasSize = UDim2.new(0, 0, 0, tabLayout.AbsoluteContentSize.Y)
+
+        local tabButtonCorner = createInstance("UICorner", {
+            CornerRadius = UDim.new(0, 6),
+            Parent = tabButton
+        })
+
+        local tabIcon = createInstance("ImageLabel", {
+            Name = "Icon",
+            Size = UDim2.new(0, 20, 0, 20),
+            Position = UDim2.new(0, 5, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://7072706318", -- Default icon
+            ImageColor3 = COLORS.SubText,
+            Parent = tabButton
+        })
+        local tabLabel = createInstance("TextLabel", {
+            Name = "Label",
+            Size = UDim2.new(1, -35, 1, 0),
+            Position = UDim2.new(0, 30, 0, 0),
+            BackgroundTransparency = 1,
+            TextColor3 = COLORS.SubText,
+            TextSize = 14,
+            Font = Enum.Font.GothamSemibold,
+            Text = name,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = tabButton
+        })
+
+        local page = createInstance("ScrollingFrame", {
+            Name = name .. "Page",
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 2,
+            ScrollBarImageColor3 = COLORS.Accent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            Visible = false,
+            Parent = pagesHolder
+        })
+
+        local pageLayout = createInstance("UIListLayout", {
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 10),
+            Parent = page
+        })
+
+        local pagePadding = createInstance("UIPadding", {
+            PaddingTop = UDim.new(0, 10),
+            PaddingLeft = UDim.new(0, 10),
+            PaddingRight = UDim.new(0, 10),
+            Parent = page
+        })
+
+        pageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            page.CanvasSize = UDim2.new(0, 0, 0, pageLayout.AbsoluteContentSize.Y + 20)
         end)
+
+        local tab = {
+            Button = tabButton,
+            Page = page,
+            Name = name,
+            Sections = {}
+        }
+
+        tabButton.MouseButton1Click:Connect(function()
+            rippleEffect(tabButton)
+            library:SelectTab(tab)
+        end)
+
+        table.insert(tabs, tab)
         
-        -- Library object
-        local library = {}
-        local tabs = {}
-        local activeTab = nil
-        
-        -- Create a new tab
-        function library:CreateTab(name, iconId)
-            -- Create tab button
-            local tabButton = createInstance("TextButton", {
-                Name = name.."Tab",
-                Size = UDim2.new(0, 130, 0, 32),
-                BackgroundColor3 = THEME.Background,
-                BackgroundTransparency = 0.5,
-                Font = FONTS.Regular,
-                Text = "",
-                AutoButtonColor = false,
-                Parent = tabContainer
+        -- Auto-select first tab
+        if #tabs == 1 then
+            library:SelectTab(tab)
+        end
+
+        function tab:Section(title)
+            local section = createInstance("Frame", {
+                Name = title .. "Section",
+                Size = UDim2.new(1, 0, 0, 40), -- Initial size, will be updated
+                BackgroundColor3 = COLORS.SectionBackground,
+                BorderSizePixel = 0,
+                Parent = page
             })
-            
-            -- Round tab button corners
-            local tabCorner = createInstance("UICorner", {
+
+            local sectionCorner = createInstance("UICorner", {
                 CornerRadius = UDim.new(0, 6),
-                Parent = tabButton
+                Parent = section
             })
-            
-            -- Create tab content
-            local tabContent = createInstance("ScrollingFrame", {
-                Name = name.."Content",
-                Size = UDim2.new(1, 0, 1, 0),
+
+            local sectionTitle = createInstance("TextLabel", {
+                Name = "Title",
+                Size = UDim2.new(1, -20, 0, 30),
+                Position = UDim2.new(0, 10, 0, 0),
+                BackgroundTransparency = 1,
+                TextColor3 = COLORS.Accent,
+                TextSize = 16,
+                Font = Enum.Font.GothamBold,
+                Text = title,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = section
+            })
+
+            local contentHolder = createInstance("Frame", {
+                Name = "ContentHolder",
+                Size = UDim2.new(1, -20, 1, -40),
+                Position = UDim2.new(0, 10, 0, 35),
                 BackgroundTransparency = 1,
                 BorderSizePixel = 0,
-                ScrollBarThickness = 4,
-                ScrollBarImageColor3 = THEME.Accent,
-                ScrollingDirection = Enum.ScrollingDirection.Y,
-                CanvasSize = UDim2.new(0, 0, 0, 0),
-                Visible = false,
-                Parent = contentContainer
+                Parent = section
             })
-            
-            -- Add padding to tab content
-            local contentPadding = createInstance("UIPadding", {
-                PaddingTop = UDim.new(0, 15),
-                PaddingBottom = UDim.new(0, 15),
-                PaddingLeft = UDim.new(0, 15),
-                PaddingRight = UDim.new(0, 15),
-                Parent = tabContent
-            })
-            
-            -- Add list layout to tab content
+
             local contentLayout = createInstance("UIListLayout", {
-                Padding = UDim.new(0, 10),
-                HorizontalAlignment = Enum.HorizontalAlignment.Center,
                 SortOrder = Enum.SortOrder.LayoutOrder,
-                Parent = tabContent
+                Padding = UDim.new(0, 8),
+                Parent = contentHolder
             })
-            
-            -- Update content canvas size when elements are added
+
             contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                tabContent.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y)
+                section.Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y + 45)
             end)
-            
-            -- Create tab layout
-            if iconId then
-                -- Create icon
-                local icon = createInstance("ImageLabel", {
-                    Name = "Icon",
-                    Size = UDim2.new(0, 16, 0, 16),
-                    Position = UDim2.new(0, 10, 0.5, -8),
-                    BackgroundTransparency = 1,
-                    Image = iconId,
-                    ImageColor3 = THEME.Text,
-                    Parent = tabButton
-                })
-                
-                -- Create tab label with icon
-                local tabLabel = createInstance("TextLabel", {
-                    Name = "Label",
-                    Size = UDim2.new(1, -36, 1, 0),
-                    Position = UDim2.new(0, 32, 0, 0),
-                    BackgroundTransparency = 1,
-                    Font = FONTS.Regular,
-                    Text = name,
-                    TextColor3 = THEME.Text,
-                    TextSize = 14,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = tabButton
-                })
-            else
-                -- Create tab label without icon
-                local tabLabel = createInstance("TextLabel", {
-                    Name = "Label",
-                    Size = UDim2.new(1, -20, 1, 0),
-                    Position = UDim2.new(0, 10, 0, 0),
-                    BackgroundTransparency = 1,
-                    Font = FONTS.Regular,
-                    Text = name,
-                    TextColor3 = THEME.Text,
-                    TextSize = 14,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = tabButton
-                })
-            end
-            
-            -- Tab selection logic
-            local tab = {
-                Button = tabButton,
-                Content = tabContent,
-                Name = name
+
+            local sectionObj = {
+                Frame = section,
+                ContentHolder = contentHolder
             }
-            
-            table.insert(tabs, tab)
-            
-            tabButton.MouseButton1Click:Connect(function()
-                library:SelectTab(name)
-                rippleEffect(tabButton)
-            end)
-            
-            -- Tab methods
-            local tabMethods = {}
-            
-            -- Create a section in the tab
-            function tabMethods:CreateSection(sectionName)
-                local sectionFrame = createInstance("Frame", {
-                    Name = sectionName.."Section",
-                    Size = UDim2.new(1, 0, 0, 36), -- Initial size, will be updated
-                    BackgroundColor3 = THEME.DarkBackground,
-                    BorderSizePixel = 0,
-                    Parent = tabContent
+
+            table.insert(tab.Sections, sectionObj)
+
+            -- Element creation functions
+            function sectionObj:Button(options)
+                options = options or {}
+                local buttonText = options.Text or "Button"
+                local callback = options.Callback or function() end
+
+                local button = createInstance("TextButton", {
+                    Name = "Button",
+                    Size = UDim2.new(1, 0, 0, 32),
+                    BackgroundColor3 = COLORS.ElementBackground,
+                    Text = "",
+                    Parent = contentHolder
                 })
-                
-                -- Round section corners
-                local sectionCorner = createInstance("UICorner", {
+
+                local buttonCorner = createInstance("UICorner", {
                     CornerRadius = UDim.new(0, 6),
-                    Parent = sectionFrame
+                    Parent = button
                 })
-                
-                -- Create section header
-                local sectionHeader = createInstance("TextLabel", {
-                    Name = "Header",
-                    Size = UDim2.new(1, 0, 0, 30),
+
+                local buttonLabel = createInstance("TextLabel", {
+                    Name = "Label",
+                    Size = UDim2.new(1, 0, 1, 0),
                     BackgroundTransparency = 1,
-                    Font = FONTS.SemiBold,
-                    Text = "  "..sectionName,
-                    TextColor3 = THEME.Text,
+                    TextColor3 = COLORS.Text,
                     TextSize = 14,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = sectionFrame
+                    Font = Enum.Font.GothamSemibold,
+                    Text = buttonText,
+                    Parent = button
                 })
-                
-                -- Create section content
-                local sectionContent = createInstance("Frame", {
-                    Name = "Content",
-                    Size = UDim2.new(1, -20, 1, -36),
-                    Position = UDim2.new(0, 10, 0, 36),
-                    BackgroundTransparency = 1,
-                    Parent = sectionFrame
-                })
-                
-                -- Add list layout to section content
-                local sectionLayout = createInstance("UIListLayout", {
-                    Padding = UDim.new(0, 8),
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                    Parent = sectionContent
-                })
-                
-                -- Update section size when elements are added
-                sectionLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    sectionFrame.Size = UDim2.new(1, 0, 0, sectionLayout.AbsoluteContentSize.Y + 46)
+
+                button.MouseButton1Click:Connect(function()
+                    rippleEffect(button)
+                    callback()
                 end)
-                
-                -- Section methods
-                local sectionMethods = {}
-                
-                -- Create a button
-                function sectionMethods:AddButton(text, callback)
-                    local button = createInstance("TextButton", {
-                        Name = text.."Button",
-                        Size = UDim2.new(1, 0, 0, 32),
-                        BackgroundColor3 = THEME.Button,
-                        Font = FONTS.Regular,
-                        Text = text,
-                        TextColor3 = THEME.Text,
-                        TextSize = 14,
-                        AutoButtonColor = false,
-                        Parent = sectionContent
-                    })
-                    
-                    -- Round button corners
-                    local buttonCorner = createInstance("UICorner", {
-                        CornerRadius = UDim.new(0, 4),
-                        Parent = button
-                    })
-                    
-                    -- Button effects
-                    button.MouseEnter:Connect(function()
-                        tween(button, {BackgroundColor3 = THEME.ButtonHover}, 0.2)
-                    end)
-                    
-                    button.MouseLeave:Connect(function()
-                        tween(button, {BackgroundColor3 = THEME.Button}, 0.2)
-                    end)
-                    
-                    button.MouseButton1Click:Connect(function()
-                        rippleEffect(button)
-                        callback()
-                    end)
-                    
-                    return button
-                end
-                
-                -- Create a toggle
-                function sectionMethods:AddToggle(text, default, callback)
-                    local toggleFrame = createInstance("Frame", {
-                        Name = text.."Toggle",
-                        Size = UDim2.new(1, 0, 0, 32),
-                        BackgroundTransparency = 1,
-                        Parent = sectionContent
-                    })
-                    
-                    local toggleLabel = createInstance("TextLabel", {
-                        Name = "Label",
-                        Size = UDim2.new(1, -54, 1, 0),
-                        BackgroundTransparency = 1,
-                        Font = FONTS.Regular,
-                        Text = text,
-                        TextColor3 = THEME.Text,
-                        TextSize = 14,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        Parent = toggleFrame
-                    })
-                    
-                    local toggleButton = createInstance("Frame", {
-                        Name = "ToggleButton",
-                        Size = UDim2.new(0, 44, 0, 24),
-                        Position = UDim2.new(1, -44, 0.5, -12),
-                        BackgroundColor3 = THEME.ToggleBackground,
-                        Parent = toggleFrame
-                    })
-                    
-                    local toggleCorner = createInstance("UICorner", {
-                        CornerRadius = UDim.new(1, 0),
-                        Parent = toggleButton
-                    })
-                    
-                    local toggleIndicator = createInstance("Frame", {
-                        Name = "Indicator",
-                        Size = UDim2.new(0, 18, 0, 18),
-                        Position = UDim2.new(0, 3, 0.5, -9),
-                        BackgroundColor3 = THEME.Text,
-                        Parent = toggleButton
-                    })
-                    
-                    local indicatorCorner = createInstance("UICorner", {
-                        CornerRadius = UDim.new(1, 0),
-                        Parent = toggleIndicator
-                    })
-                    
-                    -- Toggle state
-                    local enabled = default or false
-                    
-                    local function updateToggle()
-                        if enabled then
-                            tween(toggleButton, {BackgroundColor3 = THEME.Accent}, 0.2)
-                            tween(toggleIndicator, {Position = UDim2.new(0, 23, 0.5, -9)}, 0.2)
-                        else
-                            tween(toggleButton, {BackgroundColor3 = THEME.ToggleBackground}, 0.2)
-                            tween(toggleIndicator, {Position = UDim2.new(0, 3, 0.5, -9)}, 0.2)
-                        end
-                        callback(enabled)
-                    end
-                    
-                    -- Initialize toggle state
-                    updateToggle()
-                    
-                    -- Toggle interaction
-                    toggleButton.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                            enabled = not enabled
-                            updateToggle()
-                        end
-                    end)
-                    
-                    -- Toggle methods
-                    local toggleMethods = {}
-                    
-                    function toggleMethods:SetState(state)
-                        enabled = state
-                        updateToggle()
-                    end
-                    
-                    function toggleMethods:GetState()
-                        return enabled
-                    end
-                    
-                    return toggleMethods
-                end
-                
-                return sectionMethods
+
+                button.MouseEnter:Connect(function()
+                    tween(button, {BackgroundColor3 = COLORS.ElementBackgroundHover}, 0.2)
+                end)
+
+                button.MouseLeave:Connect(function()
+                    tween(button, {BackgroundColor3 = COLORS.ElementBackground}, 0.2)
+                end)
+
+                return button
             end
-            
-            return tabMethods
+
+            return sectionObj
         end
-        
-        -- Select a tab by name
-        function library:SelectTab(tabName)
-            for _, tab in pairs(tabs) do
-                if tab.Name == tabName then
-                    -- Show selected tab
-                    tab.Content.Visible = true
-                    tween(tab.Button, {BackgroundTransparency = 0}, 0.2)
-                    activeTab = tab
-                else
-                    -- Hide other tabs
-                    tab.Content.Visible = false
-                    tween(tab.Button, {BackgroundTransparency = 0.5}, 0.2)
-                end
-            end
-        end
-        
-        -- Select first tab by default
-        if #tabs > 0 then
-            library:SelectTab(tabs[1].Name)
-        end
-        
-        return library
+
+        return tab
     end
-    
-    return NexusUI
+
+    function library:SelectTab(tab)
+        if selectedTab == tab then return end
+        
+        -- Deselect current tab
+        if selectedTab then
+            tween(selectedTab.Button, {BackgroundColor3 = COLORS.TabUnselected}, 0.2)
+            local icon = selectedTab.Button:FindFirstChild("Icon")
+            local label = selectedTab.Button:FindFirstChild("Label")
+            if icon then tween(icon, {ImageColor3 = COLORS.SubText}, 0.2) end
+            if label then tween(label, {TextColor3 = COLORS.SubText}, 0.2) end
+            selectedTab.Page.Visible = false
+        end
+        
+        -- Select new tab
+        selectedTab = tab
+        tween(tab.Button, {BackgroundColor3 = COLORS.TabSelected}, 0.2)
+        local icon = tab.Button:FindFirstChild("Icon")
+        local label = tab.Button:FindFirstChild("Label")
+        if icon then tween(icon, {ImageColor3 = COLORS.Accent}, 0.2) end
+        if label then tween(label, {TextColor3 = COLORS.Accent}, 0.2) end
+        tab.Page.Visible = true
+        
+        library.SelectedTab = tab
+    end
+
+    function library:Notification(options)
+        options = options or {}
+        local title = options.Title or "Notification"
+        local text = options.Text or "This is a notification"
+        local duration = options.Duration or 5
+        local type = options.Type or "Info" -- Info, Success, Warning, Error
+
+        local colors = {
+            Info = Color3.fromRGB(70, 130, 255),
+            Success = Color3.fromRGB(70, 200, 120),
+            Warning = Color3.fromRGB(255, 200, 70),
+            Error = Color3.fromRGB(255, 70, 70)
+        }
+
+        local notification = createInstance("Frame", {
+            Name = "Notification",
+            Size = UDim2.new(1, 0, 0, 80),
+            BackgroundColor3 = COLORS.BackgroundDarker,
+            BorderSizePixel = 0,
+            Position = UDim2.new(1, 0, 0, 0),
+            Parent = notificationsFrame
+        })
+
+        local notificationCorner = createInstance("UICorner", {
+            CornerRadius = UDim.new(0, 8),
+            Parent = notification
+        })
+
+        local notificationBar = createInstance("Frame", {
+            Name = "Bar",
+            Size = UDim2.new(0, 4, 1, 0),
+            BackgroundColor3 = colors[type],
+            BorderSizePixel = 0,
+            Parent = notification
+        })
+
+        local notificationBarCorner = createInstance("UICorner", {
+            CornerRadius = UDim.new(0, 8),
+            Parent = notificationBar
+        })
+
+        local notificationTitle = createInstance("TextLabel", {
+            Name = "Title",
+            Size = UDim2.new(1, -20, 0, 25),
+            Position = UDim2.new(0, 15, 0, 5),
+            BackgroundTransparency = 1,
+            TextColor3 = colors[type],
+            TextSize = 16,
+            Font = Enum.Font.GothamBold,
+            Text = title,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = notification
+        })
+
+        local notificationText = createInstance("TextLabel", {
+            Name = "Text",
+            Size = UDim2.new(1, -20, 0, 40),
+            Position = UDim2.new(0, 15, 0, 30),
+            BackgroundTransparency = 1,
+            TextColor3 = COLORS.Text,
+            TextSize = 14,
+            Font = Enum.Font.Gotham,
+            Text = text,
+            TextWrapped = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = notification
+        })
+
+        -- Animation
+        tween(notification, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        
+        -- Auto-remove after duration
+        delay(duration, function()
+            tween(notification, {Position = UDim2.new(1, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+            wait(0.5)
+            notification:Destroy()
+        end)
+    end
+
+    return library
+end
+
+return NebulaUI
