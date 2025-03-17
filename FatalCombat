@@ -397,7 +397,7 @@ Tabs.QoLTab:Input({
         if newSpeed then
             local player = game.Players.LocalPlayer
             
-            -- Apply to char
+            
             if player.Character then
                 local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
@@ -408,7 +408,7 @@ Tabs.QoLTab:Input({
            
             local connection
             connection = player.CharacterAdded:Connect(function(char)
-                wait(0.5) -- Wait for character to fully load
+                wait(0.5) 
                 local humanoid = char:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     humanoid.WalkSpeed = newSpeed
@@ -418,7 +418,7 @@ Tabs.QoLTab:Input({
     end
 })
 
--- Fixed JumpPower changer
+
 Tabs.QoLTab:Input({
     Title = "Set JumpPower",
     Desc = "Enter your JumpPower value",
@@ -429,7 +429,7 @@ Tabs.QoLTab:Input({
         if newJumpPower then
             local player = game.Players.LocalPlayer
             
-            -- Apply to current character
+            
             if player.Character then
                 local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
@@ -714,7 +714,7 @@ local function performDodge()
         game:GetService("Players").LocalPlayer.Character.Communicate:FireServer(unpack(args))
     end)
     
-    wait(1) -- Cooldown between dodges
+    wait(1) 
     dodgeCooldown = false
 end
 
@@ -725,7 +725,7 @@ local function autoDodge()
         local char = player.Character
         if not char then continue end
         
-        -- Check for nearby enemies attacking
+     
         for _, enemy in pairs(workspace.Live:GetChildren()) do
             if enemy ~= char and enemy:FindFirstChildOfClass("Humanoid") and enemy:FindFirstChildOfClass("Humanoid").Health > 0 then
                 local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
@@ -735,7 +735,7 @@ local function autoDodge()
                     local distance = (enemyHRP.Position - charHRP.Position).Magnitude
                     
                     if distance < 10 then
-                        -- Check if enemy is attacking
+                        
                         local animator = enemy:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
                         if animator then
                             for _, track in pairs(animator:GetPlayingAnimationTracks()) do
@@ -797,32 +797,32 @@ local function updateHitboxes()
                 hitboxPart.Anchored = false
                 hitboxPart.Material = Enum.Material.SmoothPlastic
                 
-                -- Make the hitbox part non-solid
+               
                 hitboxPart.Massless = true
                 hitboxPart.CastShadow = false
                 
-                -- Create weld to attach hitbox to HumanoidRootPart
+              
                 local weld = Instance.new("Weld")
                 weld.Part0 = hrp
                 weld.Part1 = hitboxPart
                 weld.C0 = CFrame.new(0, 0, 0)
                 weld.Parent = hitboxPart
                 
-                -- Set collision properties to prevent physics issues
+                -- Set collision properties
                 hitboxPart.CanQuery = true
                 hitboxPart.CanTouch = true
                 
                 -- Parent the hitbox part to the character
                 hitboxPart.Parent = player.Character
                 
-                -- Add to our tracking table
+               
                 table.insert(hitboxParts, hitboxPart)
             end
         end
     end
 end
 
--- Toggle for hitbox extender
+
 Tabs.MainTab:Toggle({
     Title = "Enable Hitbox Extender",
     Default = false,
@@ -836,7 +836,7 @@ Tabs.MainTab:Toggle({
     end
 })
 
--- Input for hitbox size
+
 Tabs.MainTab:Input({
     Title = "Hitbox Size",
     Desc = "Enter hitbox size (1-20)",
@@ -853,7 +853,7 @@ Tabs.MainTab:Input({
     end
 })
 
--- Input for hitbox transparency
+
 Tabs.MainTab:Input({
     Title = "Hitbox Transparency",
     Desc = "Enter transparency (0-1)",
@@ -908,7 +908,7 @@ local function toggleNorthernLights()
     local lighting = game:GetService("Lighting")
     
     if northernLightsEnabled then
-        -- Save original lighting settings if not saved already
+        
         if not originalLightingSettings.Ambient then
             originalLightingSettings.Ambient = lighting.Ambient
             originalLightingSettings.OutdoorAmbient = lighting.OutdoorAmbient
@@ -917,10 +917,10 @@ local function toggleNorthernLights()
             originalLightingSettings.Brightness = lighting.Brightness
         end
         
-        -- Start the aurora effect update loop
+       
         spawn(function()
             while northernLightsEnabled do
-                -- Blend between colors
+               
                 colorBlendTime = colorBlendTime + 0.01
                 if colorBlendTime >= 1 then
                     colorBlendTime = 0
@@ -946,7 +946,7 @@ local function toggleNorthernLights()
             end
         end)
     else
-        -- Restore original lighting settings
+        
         if originalLightingSettings.Ambient then
             lighting.Ambient = originalLightingSettings.Ambient
             lighting.OutdoorAmbient = originalLightingSettings.OutdoorAmbient
@@ -973,7 +973,7 @@ local function toggleArcticNight()
     local lighting = game:GetService("Lighting")
     
     if arcticNightEnabled then
-        -- Save original settings if not saved already
+        
         if not originalSkySettings.ClockTime then
             originalSkySettings.ClockTime = lighting.ClockTime
             originalSkySettings.Brightness = lighting.Brightness
@@ -985,7 +985,7 @@ local function toggleArcticNight()
             originalSkySettings.FogStart = lighting.FogStart
             originalSkySettings.FogEnd = lighting.FogEnd
             
-            -- Save sky settings if they exist
+        
             local sky = lighting:FindFirstChildOfClass("Sky")
             if sky then
                 originalSkySettings.SkyboxBk = sky.SkyboxBk
@@ -1176,7 +1176,7 @@ Tabs.QoLTab:Toggle({
 
 -- Chat Spammer
 local spamEnabled = false
-local spamMessage = "Ratware on top!"
+local spamMessage = "Ratware on top"
 local spamDelay = 3
 
 local function chatSpammer()
@@ -1313,14 +1313,14 @@ local modGroupIds = {
     {groupId = 32817944, minRank = 50}, -- if your modifying my code, add more groups.
 }
 
--- Function to check if a player is a moderator
+-- check if a player is a moderator
 local function isPlayerMod(player)
     -- Check if player's userId is in our mod list
     if table.find(modUserIds, player.UserId) then
         return true
     end
     
-    -- Check if player has moderator rank in any of our specified groups
+    -- Check if player has moderator rank in any of the groups
     for _, groupInfo in ipairs(modGroupIds) do
         local success, rank = pcall(function()
             return player:GetRankInGroup(groupInfo.groupId)
@@ -1349,19 +1349,19 @@ local function onPlayerJoined(player)
     
     if isPlayerMod(player) then
         Scr:Notify("Moderator Detected", player.Name .. " (" .. player.DisplayName .. ") has joined the game. Leaving...", 5)
-        wait(2) -- Give time for notification to be seen
+        wait(2) 
         game:GetService("Players").LocalPlayer:Kick("Automatically left: Moderator joined")
         wait(0.5)
         game:GetService("TeleportService"):Teleport(game.PlaceId)
     end
 end
 
---  check existing players when feature is enabled
+
 local function checkExistingPlayers()
     for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
         if player ~= game:GetService("Players").LocalPlayer and isPlayerMod(player) then
             Scr:Notify("Moderator Detected", player.Name .. " (" .. player.DisplayName .. ") is in the server. Leaving...", 5)
-            wait(2) -- Give time for notification to be seen
+            wait(2) 
             game:GetService("Players").LocalPlayer:Kick("Automatically left: Moderator in server")
             wait(0.5)
             game:GetService("TeleportService"):Teleport(game.PlaceId)
@@ -1377,15 +1377,15 @@ Tabs.QoLTab:Toggle({
         leaveOnModEnabled = state
         
         if leaveOnModEnabled then
-            -- Check if there are already mods in the server
+         
             checkExistingPlayers()
             
-            -- Connect player added event
+           
             if not getgenv().ModJoinConnection then
                 getgenv().ModJoinConnection = game:GetService("Players").PlayerAdded:Connect(onPlayerJoined)
             end
         else
-            -- Disconnect event if it exists
+          
             if getgenv().ModJoinConnection then
                 getgenv().ModJoinConnection:Disconnect()
                 getgenv().ModJoinConnection = nil
