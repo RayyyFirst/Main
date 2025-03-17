@@ -1394,6 +1394,34 @@ Tabs.QoLTab:Toggle({
     end
 })
 
+local evasiveResetEnabled = false
+
+local function resetEvasive()
+    while evasiveResetEnabled do
+        local player = game.Players.LocalPlayer
+        if player and player.Character then
+            local attribute = player.Character:FindFirstChild("LastEvasiveUsed")
+            if attribute then
+                attribute.Value = 0
+            end
+        end
+        wait(0.1)
+    end
+end
+
+Tabs.MainTab:Toggle({
+    Title = "No Evasive Cooldown",
+    Default = false,
+    Callback = function(state)
+        evasiveResetEnabled = state
+        if evasiveResetEnabled then
+            spawn(resetEvasive)
+        end
+    end
+})
+
+
+
 warn("Update 1.5.1")
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
