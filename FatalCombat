@@ -1426,7 +1426,7 @@ warn("Update 1.5.1")
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
     Title = "Welcome to Ratware", 
-    Text = "This script is provided for free with no legal bindings.", 
+    Text = "This script is provided to the user according to the terms stated on the github page, for more information go to github.com/RayyyFirst/Main", 
     Duration = 10, 
 })
 
