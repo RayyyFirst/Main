@@ -2,7 +2,7 @@
 # ⚠️ License & Distribution Policy
 
 ## 🚨 Important Notice  
-This repository and all its contents are **protected** under copyright law. Unauthorized distribution, modification, or use beyond the permissions granted below is strictly **prohibited** and may result in legal action, including but not limited to DMCA takedown requests.
+By executing this scipt, you have already given up all legal rights to sue if i give you the titty twister24.
 
 ---
 
