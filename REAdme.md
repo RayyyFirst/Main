@@ -2,7 +2,23 @@
 # ⚠️ License & Distribution Policy
 
 ## 🚨 Important Notice  
-By executing this scipt, you have already given up all legal rights to sue if i give you the titty twister24.
+Twister2283 Femboy Maid Service TOS
+By executing this script, you agree to the following terms:
+
+Eternal Loyalty: You hereby vow to become the executor’s loyal, submissive femboy maid for the rest of your natural life (and possibly beyond, if the person executing figures out necromancy).
+
+Maid Costume Mandate: You surrender all rights to protest, resist, or look unfabulous while wearing the designated maid outfit (fishnets, frills, and cat ears are non-negotiable).
+
+Twister2283 Clause: You acknowledge that the "Twister2283" is a mysterious and irreversible procedure involving:
+
+Unlimited head.
+
+
+Legal Immunity: You forfeit all rights to sue, complain, or exist outside the owners’s aesthetic desires. Any legal claims will be settled via a dance-off (judged by a panel of hostile raccoons).
+
+
+
+Remember: this contract is permanent and only removable if agreed upon with the script creator.
 
 ---
 
