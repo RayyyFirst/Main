@@ -23,3 +23,9 @@ print("nigga sandwhich #1")
     print("nigga ballsack #3")
 task.wait(0.05)
 end
+
+if input.KeyCode == Enum.KeyCode.K then
+    while true do 
+        return
+    end
+end
