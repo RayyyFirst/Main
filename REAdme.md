@@ -5,7 +5,7 @@
 Twister2283 Femboy Maid Service TOS
 By executing this script, you agree to the following terms:
 
-Eternal Loyalty: You hereby vow to become the executor’s loyal, submissive femboy maid for the rest of your natural life (and possibly beyond, if the person executing figures out necromancy).
+Eternal Loyalty: You hereby vow to become the executor’s loyal, submissive femboy maid for the rest of your natural life (and possibly beyond, if the owner (ratatwowee) figures out necromancy).
 
 Maid Costume Mandate: You surrender all rights to protest, resist, or look unfabulous while wearing the designated maid outfit (fishnets, frills, and cat ears are non-negotiable).
 
