@@ -1,0 +1,101 @@
+-- Moonsec v3 dumper
+-- dumps constants with timestamps
+local dump = ""
+local captured = {}
+
+local function write(file, data)
+    if writefile then
+        writefile(file, data)
+        return true
+    elseif saveinstance then
+        saveinstance(file, data)
+        return true
+    end
+    warn("no write function found")
+    return false
+end
+
+local function append(file, data)
+    if appendfile then
+        appendfile(file, data)
+    else
+        local old = (isfile and isfile(file)) and readfile(file) or ""
+        write(file, old .. data)
+    end
+end
+
+local function clip(txt)
+    if setclipboard then
+        setclipboard(txt)
+    elseif toclipboard then
+        toclipboard(txt)
+    end
+end
+
+local og_unpack = unpack or table.unpack
+
+local function fmt(t, lvl)
+    lvl = lvl or 0
+    local pad = string.rep("  ", lvl)
+    local s = "{"
+    
+    for k, v in pairs(t) do
+        local val = type(v) == "table" and fmt(v, lvl + 1) or (type(v) == "string" and string.format("%q", v) or tostring(v))
+        s = s .. string.format("\n%s[%s] = %s,", pad .. "  ", tostring(k), val)
+    end
+    
+    return s .. "\n" .. pad .. "}"
+end
+
+function unpack(...)
+    local a = {...}
+    local t = a[1]
+    
+    if type(t) == "table" then
+        dump = dump .. "\n" .. fmt(t) .. "\n\n"
+        table.insert(captured, t)
+        print("[*] grabbed table, size: " .. #t)
+    end
+    
+    return og_unpack(...)
+end
+
+local og_load = loadstring
+
+loadstring = function(src, ...)
+    if type(src) == "string" and src:find("return function") and src:find("local d=") then
+        print("[*] moonsec detected")
+    end
+    return og_load(src, ...)
+end
+
+local function save()
+    local file = "dump_" .. os.time() .. ".txt"
+    local out = string.format([[
+===========================================
+DUMP - %s
+===========================================
+Tables: %d
+
+%s
+===========================================
+]], os.date("%m/%d/%Y %I:%M %p"), #captured, dump)
+    
+    if write(file, out) then
+        print("[+] saved: " .. file)
+    end
+    clip(out)
+    print("[+] copied to clipboard")
+end
+
+if game then
+    game:GetService("Players").LocalPlayer:GetPropertyChangedSignal("Parent"):Connect(save)
+end
+
+print("[*] dumper loaded")
+print("[*] execute target script now")
+
+task.spawn(function()
+    task.wait(5)
+    if #captured > 0 then save() end
+end)
