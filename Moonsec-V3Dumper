@@ -1,119 +1,104 @@
-local config = {
-    auto_save_delay = 5,
-    save_on_leave = true,
-    copy_to_clipboard = true,
-    print_captures = true
-}
-
-_G.DumperConfig = config
-
-local dump = ""
+local output = ""
 local captured = {}
 
 local function write(file, data)
     if writefile then
         writefile(file, data)
         return true
-    elseif saveinstance then
-        saveinstance(file, data)
-        return true
     end
-    warn("no write function found")
+    warn("no write function available")
     return false
 end
 
-local function append(file, data)
-    if appendfile then
-        appendfile(file, data)
-    else
-        local old = (isfile and isfile(file)) and readfile(file) or ""
-        write(file, old .. data)
-    end
-end
-
-local function clip(txt)
+local function clip(text)
     if setclipboard then
-        setclipboard(txt)
+        setclipboard(text)
+        return true
     elseif toclipboard then
-        toclipboard(txt)
+        toclipboard(text)
+        return true
     end
+    return false
 end
 
 local og_unpack = unpack or table.unpack
+local og_load = loadstring
 
-local function fmt(t, lvl)
-    lvl = lvl or 0
-    local pad = string.rep("  ", lvl)
-    local s = "{"
+local function fmt(tbl, indent)
+    indent = indent or 0
+    local spacing = string.rep("  ", indent)
+    local result = "{"
     
-    for k, v in pairs(t) do
-        local val = type(v) == "table" and fmt(v, lvl + 1) or (type(v) == "string" and string.format("%q", v) or tostring(v))
-        s = s .. string.format("\n%s[%s] = %s,", pad .. "  ", tostring(k), val)
+    for index, value in pairs(tbl) do
+        if type(value) == "table" then
+            result = result .. string.format("\n%s[%s] = %s,", 
+                spacing .. "  ", tostring(index), fmt(value, indent + 1))
+        else
+            local val = type(value) == "string" and string.format("%q", value) or tostring(value)
+            result = result .. string.format("\n%s[%s] = %s,", 
+                spacing .. "  ", tostring(index), val)
+        end
     end
     
-    return s .. "\n" .. pad .. "}"
+    result = result .. "\n" .. spacing .. "}"
+    return result
 end
 
 function unpack(...)
-    local a = {...}
-    local t = a[1]
+    local args = {...}
+    local t = args[1]
     
     if type(t) == "table" then
-        dump = dump .. "\n" .. fmt(t) .. "\n\n"
+        local formatted = fmt(t)
+        output = output .. "\n" .. formatted .. "\n\n"
         table.insert(captured, t)
-        if config.print_captures then
-            print("[*] grabbed table, size: " .. #t)
-        end
+        print("[*] captured table, size:", #t)
     end
     
     return og_unpack(...)
 end
 
-local og_load = loadstring
-
-loadstring = function(src, ...)
-    if type(src) == "string" and src:find("return function") and src:find("local d=") then
-        if config.print_captures then
-            print("[*] moonsec detected")
+loadstring = function(code, ...)
+    if type(code) == "string" then
+        if code:find("return function") and code:find("local d=") then
+            print("[*] moonsec v3 detected")
         end
     end
-    return og_load(src, ...)
+    return og_load(code, ...)
 end
 
 local function save()
     local file = "dump_" .. os.time() .. ".txt"
-    local out = string.format([[
-===========================================
-DUMP - %s
-===========================================
+    local result = string.format([[
+========================================
+DUMP RESULTS
+========================================
+Captured: %s
 Tables: %d
 
 %s
-===========================================
-]], os.date("%m/%d/%Y %I:%M %p"), #captured, dump)
+========================================
+]], os.date("%Y-%m-%d %H:%M:%S"), #captured, output)
     
-    if write(file, out) then
-        print("[+] saved: " .. file)
+    if write(file, result) then
+        print("[+] saved:", file)
     end
-    
-    if config.copy_to_clipboard then
-        clip(out)
+    if clip(result) then
         print("[+] copied to clipboard")
     end
+    print("[+] complete, tables:", #captured)
 end
 
-_G.saveDump = save
-
-if game and config.save_on_leave then
+if game then
     game:GetService("Players").LocalPlayer:GetPropertyChangedSignal("Parent"):Connect(save)
 end
 
-print("[*] dumper loaded")
-print("[*] execute target script now")
+print("[*] dumper ready")
+print("[*] execute obfuscated script")
 
-if config.auto_save_delay and config.auto_save_delay > 0 then
-    task.spawn(function()
-        task.wait(config.auto_save_delay)
-        if #captured > 0 then save() end
-    end)
-end
+task.spawn(function()
+    task.wait(5)
+    if #captured > 0 then
+        save()
+    end
+end)
