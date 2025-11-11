@@ -1,5 +1,12 @@
--- Moonsec v3 dumper
--- dumps constants with timestamps
+local config = {
+    auto_save_delay = 5,
+    save_on_leave = true,
+    copy_to_clipboard = true,
+    print_captures = true
+}
+
+_G.DumperConfig = config
+
 local dump = ""
 local captured = {}
 
@@ -54,7 +61,9 @@ function unpack(...)
     if type(t) == "table" then
         dump = dump .. "\n" .. fmt(t) .. "\n\n"
         table.insert(captured, t)
-        print("[*] grabbed table, size: " .. #t)
+        if config.print_captures then
+            print("[*] grabbed table, size: " .. #t)
+        end
     end
     
     return og_unpack(...)
@@ -64,7 +73,9 @@ local og_load = loadstring
 
 loadstring = function(src, ...)
     if type(src) == "string" and src:find("return function") and src:find("local d=") then
-        print("[*] moonsec detected")
+        if config.print_captures then
+            print("[*] moonsec detected")
+        end
     end
     return og_load(src, ...)
 end
@@ -84,18 +95,25 @@ Tables: %d
     if write(file, out) then
         print("[+] saved: " .. file)
     end
-    clip(out)
-    print("[+] copied to clipboard")
+    
+    if config.copy_to_clipboard then
+        clip(out)
+        print("[+] copied to clipboard")
+    end
 end
 
-if game then
+_G.saveDump = save
+
+if game and config.save_on_leave then
     game:GetService("Players").LocalPlayer:GetPropertyChangedSignal("Parent"):Connect(save)
 end
 
 print("[*] dumper loaded")
 print("[*] execute target script now")
 
-task.spawn(function()
-    task.wait(5)
-    if #captured > 0 then save() end
-end)
+if config.auto_save_delay and config.auto_save_delay > 0 then
+    task.spawn(function()
+        task.wait(config.auto_save_delay)
+        if #captured > 0 then save() end
+    end)
+end
