@@ -71,7 +71,7 @@ local function save()
     local file = "dump_" .. os.time() .. ".txt"
     local result = string.format([[
 ========================================
-DUMP RESULTS
+RAT'S DUMP RESULTS
 ========================================
 Captured: %s
 Tables: %d
